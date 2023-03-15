@@ -1,19 +1,20 @@
+import axios from 'axios';
+
 export default class PixabayApiService {
   constructor() {
     this.query = '';
     this.page = 1;
+    this.per_page = 40;
   }
 
   async fetchImages(query) {
-    const axios = require('axios').default;
-
     const options = {
       params: {
         key: '27407559-16eca6dd65687bb41f2493a6b',
         image_type: 'photo',
         orientation: 'horizontal',
         safesearch: 'true',
-        per_page: 40,
+        per_page: this.per_page,
         page: this.page,
         q: this.query,
       },
@@ -22,15 +23,11 @@ export default class PixabayApiService {
     try {
       const URL = `https://pixabay.com/api/`;
 
-      const response = await axios.get(URL, options).then(response => {
-        return response.data;
-      });
-
+      const response = await axios.get(URL, options);
       this.page += 1;
-
-      return response;
+      return response.data;
     } catch (error) {
-      console.log(error.code, error.stack);
+      console.error('Error fetching images:', error);
     }
   }
 

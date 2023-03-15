@@ -1,3 +1,5 @@
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
 import PixabayApiService from './js/pixabay-service';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
@@ -14,7 +16,7 @@ hideBtn(refs.loadMoreBtn);
 refs.searchForm.addEventListener('submit', onSearch);
 refs.loadMoreBtn.addEventListener('click', onLoadMore);
 
-function onSearch(e) {
+async function onSearch(e) {
   e.preventDefault();
 
   pixabayApiService.query = e.currentTarget.elements.searchQuery.value;
@@ -26,7 +28,8 @@ function onSearch(e) {
   pixabayApiService.resetPage();
   hideBtn(refs.loadMoreBtn);
 
-  pixabayApiService.fetchImages().then(data => {
+  try {
+    const data = await pixabayApiService.fetchImages();
     clearContainer();
 
     if (data.totalHits === 0) {
@@ -34,26 +37,31 @@ function onSearch(e) {
     }
 
     appendImagesMarkup(data.hits);
+    addSimpleLightbox();
     enebleBtn(refs.loadMoreBtn);
 
     Notify.success(`Hooray! We found ${data.totalHits} images.`);
-  });
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 function onLoadMore(e) {
   pixabayApiService.fetchImages().then(data => {
-    if (data.hits.length !== data.totalHits) {
+    addSimpleLightbox().refresh();
+    appendImagesMarkup(data.hits);
+
+    if (refs.imgesContainer.childElementCount === data.totalHits) {
       hideBtn(refs.loadMoreBtn);
       return Notify.info(
         "We're sorry, but you've reached the end of search results."
       );
     }
-    appendImagesMarkup(data.hits);
   });
 }
 
 function imagesMarkup(img) {
-  return `<div class="photo-card">
+  return `<a href="${img.largeImageURL}" class="lightbox"><div class="photo-card">
       <img src="${img.webformatURL}" alt="${img.tags}" loading="lazy" />
       <div class="info">
         <p class="info-item">
@@ -73,7 +81,7 @@ function imagesMarkup(img) {
           ${img.downloads}
         </p>
       </div>
-    </div>`;
+    </div></a>`;
 }
 
 function appendImagesMarkup(hits) {
@@ -100,4 +108,9 @@ function enebleBtn(element) {
 function hideBtn(element) {
   element.disabled = true;
   element.classList.add('is-hidden');
+}
+
+function addSimpleLightbox() {
+  let lightbox = new SimpleLightbox('.gallery a', {});
+  return lightbox;
 }
