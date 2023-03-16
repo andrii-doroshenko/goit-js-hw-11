@@ -48,7 +48,6 @@ async function onSearch(e) {
     }
 
     enebleBtn(refs.loadMoreBtn);
-
     Notify.success(`Hooray! We found ${data.totalHits} images.`);
   } catch (error) {
     console.log(error);
@@ -71,8 +70,11 @@ async function onLoadMore(e) {
   }
 }
 
-function imagesMarkup(img) {
-  return `<a href="${img.largeImageURL}" class="lightbox"><div class="photo-card">
+function imagesMarkup(hits) {
+  const template = hits
+    .map(img => {
+      return `<a href="${img.largeImageURL}" class="lightbox">
+      <div class="photo-card">
       <img src="${img.webformatURL}" alt="${img.tags}" loading="lazy" />
       <div class="info">
         <p class="info-item">
@@ -93,12 +95,14 @@ function imagesMarkup(img) {
         </p>
       </div>
     </div></a>`;
+    })
+    .join('');
+
+  return template;
 }
 
 function appendImagesMarkup(hits) {
-  hits.map(img => {
-    refs.imgesContainer.insertAdjacentHTML('beforeend', imagesMarkup(img));
-  });
+  refs.imgesContainer.insertAdjacentHTML('beforeend', imagesMarkup(hits));
   lightbox.refresh();
 }
 
