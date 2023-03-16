@@ -1,9 +1,19 @@
+import PixabayApiService from './js/pixabay-service';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
-import PixabayApiService from './js/pixabay-service';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 const pixabayApiService = new PixabayApiService();
+
+const lightbox = new SimpleLightbox('.gallery a', {
+  captionType: 'attr',
+  captionsData: 'alt',
+  captionPosition: 'bottom',
+  captionDelay: 250,
+  enableKeyboard: true,
+  docClose: true,
+  scaleImageToRatio: true,
+});
 
 const refs = {
   searchForm: document.querySelector('form#search-form'),
@@ -31,13 +41,12 @@ async function onSearch(e) {
   try {
     const data = await pixabayApiService.fetchImages();
     clearContainer();
+    appendImagesMarkup(data.hits);
 
     if (data.totalHits === 0) {
       return fetchRjected();
     }
 
-    appendImagesMarkup(data.hits);
-    addSimpleLightbox();
     enebleBtn(refs.loadMoreBtn);
 
     Notify.success(`Hooray! We found ${data.totalHits} images.`);
@@ -46,9 +55,9 @@ async function onSearch(e) {
   }
 }
 
-function onLoadMore(e) {
-  pixabayApiService.fetchImages().then(data => {
-    addSimpleLightbox().refresh();
+async function onLoadMore(e) {
+  try {
+    const data = await pixabayApiService.fetchImages();
     appendImagesMarkup(data.hits);
 
     if (refs.imgesContainer.childElementCount === data.totalHits) {
@@ -57,7 +66,9 @@ function onLoadMore(e) {
         "We're sorry, but you've reached the end of search results."
       );
     }
-  });
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 function imagesMarkup(img) {
@@ -88,6 +99,7 @@ function appendImagesMarkup(hits) {
   hits.map(img => {
     refs.imgesContainer.insertAdjacentHTML('beforeend', imagesMarkup(img));
   });
+  lightbox.refresh();
 }
 
 function clearContainer() {
@@ -108,9 +120,4 @@ function enebleBtn(element) {
 function hideBtn(element) {
   element.disabled = true;
   element.classList.add('is-hidden');
-}
-
-function addSimpleLightbox() {
-  let lightbox = new SimpleLightbox('.gallery a', {});
-  return lightbox;
 }
